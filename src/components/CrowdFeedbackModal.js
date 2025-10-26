@@ -5,7 +5,7 @@ import { X, Users } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CrowdFeedbackModal = ({ bus, onClose }) => {
-  const { updateCrowdLevel } = useBus();
+  const { updateCrowdLevel, roundToSignificantFigures } = useBus();
   const [selectedLevel, setSelectedLevel] = useState(bus.crowdLevel);
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,7 +33,7 @@ const CrowdFeedbackModal = ({ bus, onClose }) => {
   };
 
   // Calculate comfort score circle
-  const comfortScore = bus.comfortScore || 7.5;
+  const comfortScore = roundToSignificantFigures(bus.comfortScore || 7.5);
   const circumference = 2 * Math.PI * 45;
   const progress = (comfortScore / 10) * circumference;
 

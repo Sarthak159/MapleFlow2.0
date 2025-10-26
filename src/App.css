@@ -1103,20 +1103,73 @@ body {
 
 .map-controls {
   position: absolute;
-  right: 1rem;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.map-control-btn {
   background: white;
   border: none;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  transition: all 0.2s ease;
+}
+
+.map-control-btn:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.map-legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  font-size: 12px;
+  min-width: 150px;
+}
+
+.map-legend h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.custom-bus-marker {
+  transition: transform 0.2s ease;
+}
+
+.custom-bus-marker:hover {
+  transform: scale(1.1);
 }
 
 .zoom-in {

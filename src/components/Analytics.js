@@ -29,7 +29,7 @@ ChartJS.register(
 );
 
 const Analytics = () => {
-  const { buses, stops } = useBus();
+  const { buses, stops, roundToSignificantFigures } = useBus();
   const [selectedTimeframe, setSelectedTimeframe] = useState("week");
 
   // Calculate real-time statistics
@@ -37,7 +37,7 @@ const Analytics = () => {
   const avgOccupancy = Math.round(
     buses.reduce((sum, bus) => sum + (bus.passengerCount / bus.capacity) * 100, 0) / buses.length
   );
-  const avgComfort = (buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length).toFixed(1);
+  const avgComfort = roundToSignificantFigures(buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length);
   
   // Top 5 busiest stops by bus count (varies by timeframe)
   const getStopData = () => {

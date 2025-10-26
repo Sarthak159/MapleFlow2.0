@@ -1,8 +1,11 @@
 // BusCard.js - MapleFlow Dashboard Design
 import React from 'react';
 import { Users, TrendingUp, Bus, Clock, MapPin } from 'lucide-react';
+import { useBus } from '../context/BusContext';
 
 const BusCard = ({ bus, nextBus, onClick }) => {
+  const { roundToSignificantFigures } = useBus();
+  
   const getRouteColor = (route) => {
     const colors = {
       'CC': '#dc2626',
@@ -69,7 +72,7 @@ const BusCard = ({ bus, nextBus, onClick }) => {
         <div className="bus-metric">
           <TrendingUp size={18} className="metric-icon" />
           <span className="metric-label">Comfort Index</span>
-          <span className="metric-value">{bus.comfortScore}/10</span>
+          <span className="metric-value">{roundToSignificantFigures(bus.comfortScore)}/10</span>
         </div>
 
         <div className="bus-metric">

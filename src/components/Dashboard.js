@@ -4,11 +4,10 @@ import { useBus } from "../context/BusContext";
 import BusCard from "./BusCard.js";
 import MapView from "./MapView.js";
 import CrowdFeedbackModal from "./CrowdFeedbackModal";
-import SimulationControls from "./SimulationControls";
 import { Users, TrendingUp, RefreshCw } from "lucide-react";
 
 const Dashboard = () => {
-  const { buses, loading } = useBus();
+  const { buses, loading, roundToSignificantFigures } = useBus();
   const [selectedBus, setSelectedBus] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,7 +43,7 @@ const Dashboard = () => {
   const avgOccupancy = Math.round(
     buses.reduce((sum, bus) => sum + (bus.passengerCount / bus.capacity) * 100, 0) / buses.length
   );
-  const avgComfort = (buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length).toFixed(1);
+  const avgComfort = roundToSignificantFigures(buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length);
 
   if (loading) {
     return (
@@ -75,8 +74,6 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Simulation Controls */}
-      <SimulationControls />
 
       {/* Stats Cards */}
       <div className="stats-grid">

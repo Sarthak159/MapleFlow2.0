@@ -171,6 +171,18 @@ export const BusProvider = ({ children }) => {
     );
   };
 
+  const getRouteStops = (routeName) => {
+    return busSimulationService.getStopsForRoute(routeName);
+  };
+
+  // Round to one significant figure
+  const roundToSignificantFigures = (num, figures = 1) => {
+    if (num === 0) return 0;
+    const magnitude = Math.floor(Math.log10(Math.abs(num)));
+    const factor = Math.pow(10, figures - 1 - magnitude);
+    return Math.round(num * factor) / factor;
+  };
+
   const value = {
     buses,
     loading,
@@ -186,6 +198,8 @@ export const BusProvider = ({ children }) => {
     pauseSimulation,
     stopSimulation,
     setSimulationSpeed,
+    getRouteStops,
+    roundToSignificantFigures,
   };
 
   return <BusContext.Provider value={value}>{children}</BusContext.Provider>;

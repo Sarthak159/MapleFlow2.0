@@ -242,18 +242,56 @@ class BusSimulationService {
     });
   }
 
-  // Simulate bus movement
+  // Simulate bus movement along routes
   simulateBusMovement(bus) {
-    // Simple movement simulation - in a real app, this would be more sophisticated
-    const movementSpeed = 0.0001; // degrees per update
-    const angle = (bus.heading * Math.PI) / 180;
+    const routeStops = this.getStopsForRoute(bus.route);
+    if (routeStops.length < 2) return;
+
+    // Initialize route progress if not set
+    if (!bus.routeProgress) {
+      bus.routeProgress = 0; // 0 to 1, where 0 is start, 1 is end
+      bus.routeDirection = 1; // 1 for forward, -1 for backward
+    }
+
+    // Calculate movement along route
+    const movementSpeed = 0.001; // How fast buses move along route
+    bus.routeProgress += movementSpeed * bus.routeDirection;
+
+    // Reverse direction at route ends
+    if (bus.routeProgress >= 1) {
+      bus.routeProgress = 1;
+      bus.routeDirection = -1;
+    } else if (bus.routeProgress <= 0) {
+      bus.routeProgress = 0;
+      bus.routeDirection = 1;
+    }
+
+    // Calculate position along route
+    const currentStopIndex = Math.floor(bus.routeProgress * (routeStops.length - 1));
+    const nextStopIndex = Math.min(currentStopIndex + 1, routeStops.length - 1);
     
-    bus.location.lat += Math.cos(angle) * movementSpeed * (Math.random() - 0.5);
-    bus.location.lng += Math.sin(angle) * movementSpeed * (Math.random() - 0.5);
+    const currentStop = routeStops[currentStopIndex];
+    const nextStop = routeStops[nextStopIndex];
     
-    // Occasionally change heading
-    if (Math.random() < 0.05) { // 5% chance
-      bus.heading = (bus.heading + (Math.random() - 0.5) * 30) % 360;
+    if (currentStop && nextStop) {
+      // Interpolate position between stops
+      const progress = (bus.routeProgress * (routeStops.length - 1)) - currentStopIndex;
+      
+      bus.location.lat = currentStop.location.lat + 
+        (nextStop.location.lat - currentStop.location.lat) * progress;
+      bus.location.lng = currentStop.location.lng + 
+        (nextStop.location.lng - currentStop.location.lng) * progress;
+      
+      // Update current stop
+      bus.currentStop = currentStop.name;
+      
+      // Calculate heading based on direction to next stop
+      const deltaLat = nextStop.location.lat - currentStop.location.lat;
+      const deltaLng = nextStop.location.lng - currentStop.location.lng;
+      bus.heading = Math.atan2(deltaLng, deltaLat) * (180 / Math.PI);
+      
+      // Update next stops for display
+      bus.nextStops = this.generateNextStops(routeStops, currentStop);
     }
   }
 
