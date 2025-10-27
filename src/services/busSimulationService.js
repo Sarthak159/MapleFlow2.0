@@ -33,29 +33,76 @@ class BusSimulationService {
   // Setup stops from CSV data
   setupStops() {
     const uniqueStops = csvDataService.getUniqueStops();
+    console.log('Unique stops from CSV:', uniqueStops);
     
-    // Default stop locations (you can expand this)
+    // Stop locations matching CSV data exactly
     const stopLocations = {
-      'Arps Hall (NB)': { lat: 40.0050, lng: -83.0300 },
-      '11th & Worthington (EB)': { lat: 40.0065, lng: -83.0285 },
-      'Blackburn House (WB)': { lat: 40.0020, lng: -83.0180 },
-      'Brain and Spine Hospital': { lat: 40.0000, lng: -83.0100 },
-      'Gray': { lat: 39.9995, lng: -83.0145 },
-      'Herrick Drive Transit Hub (NB)': { lat: 40.0030, lng: -83.0220 },
-      'Mack Hall (NB)': { lat: 40.0045, lng: -83.0255 },
-      'Mason Hall (WB)': { lat: 40.0010, lng: -83.0165 },
-      'Ohio Union (NB)': { lat: 40.0025, lng: -83.0195 },
-      'Ohio Union (SB)': { lat: 40.0025, lng: -83.0195 },
-      'Ross Heart Hospital': { lat: 39.9985, lng: -83.0125 },
-      'Scarlet': { lat: 40.0055, lng: -83.0275 },
-      'Siebert Hall (WB)': { lat: 40.0040, lng: -83.0240 },
-      'St. John Arena (EB)': { lat: 40.0070, lng: -83.0310 },
-      'The James Cancer Hospital': { lat: 39.9980, lng: -83.0110 },
-      'University Hospital': { lat: 39.9975, lng: -83.0095 }
+      // Campus Connector stops
+      'Mount Hall (EB)': { lat: 40.00407, lng: -83.03678 },
+      'Mount Hall (WB)': { lat: 40.00407, lng: -83.03678 },
+      'Carmack 5 (NB)': { lat: 40.00470, lng: -83.05060 },
+      'Carmack 5 (SB)': { lat: 40.00470, lng: -83.05060 },
+      'Research Center (SB)': { lat: 40.00635, lng: -83.05330 },
+      
+      // Campus Loop South stops
+      'Arps Hall (NB)': { lat: 40.00195, lng: -83.00943 },
+      '11th & Worthington (EB)': { lat: 39.99665, lng: -83.01095 },
+      'Blackburn House (WB)': { lat: 40.00162, lng: -83.00986 },
+      'Herrick Drive Transit Hub (NB)': { lat: 39.99474, lng: -83.01950 },
+      'Mack Hall (NB)': { lat: 39.99603, lng: -83.01434 },
+      'Mason Hall (WB)': { lat: 40.004914, lng: -83.015611 },
+      'Ohio Union (NB)': { lat: 39.998361, lng: -83.00776 },
+      'Ohio Union (SB)': { lat: 39.998361, lng: -83.00776 },
+      'Siebert Hall (WB)': { lat: 39.99590, lng: -83.01227 },
+      'St. John Arena (EB)': { lat: 40.00528, lng: -83.01889 },
+      'St. John Arena (WB)': { lat: 40.00528, lng: -83.01889 },
+      
+      // East Residential stops
+      '11th & High (EB)': { lat: 39.99635, lng: -83.00755 },
+      '11th & High (WB)': { lat: 39.99635, lng: -83.00755 },
+      '15th Ave (NB)': { lat: 39.99903, lng: -83.00683 },
+      '15th Ave (SB)': { lat: 39.99903, lng: -83.00683 },
+      '18th Ave (NB)': { lat: 40.00138, lng: -83.00690 },
+      '18th Ave (SB)': { lat: 40.00138, lng: -83.00690 },
+      'Alden Ave (NB)': { lat: 40.00150, lng: -83.00650 },
+      'Alden Ave (SB)': { lat: 40.00150, lng: -83.00650 },
+      'Chittenden Ave (NB)': { lat: 39.99533, lng: -83.00645 },
+      'Chittenden Ave (SB)': { lat: 39.99533, lng: -83.00645 },
+      'High St & 15th Ave (SB)': { lat: 39.99900, lng: -83.00760 },
+      'Indianola Ave (EB)': { lat: 39.99770, lng: -83.00090 },
+      'Indianola Ave (WB)': { lat: 39.99770, lng: -83.00090 },
+      'Lane Ave (SB)': { lat: 40.00050, lng: -83.00550 },
+      'Maynard Ave (NB)': { lat: 40.00080, lng: -83.00580 },
+      'Maynard Ave (SB)': { lat: 40.00080, lng: -83.00580 },
+      'Mid Towers (NB)': { lat: 39.99902, lng: -83.02155 },
+      'Mid Towers (SB)': { lat: 39.99847, lng: -83.02197 },
+      'Tompkins St (SB)': { lat: 40.00120, lng: -83.00620 },
+      
+      // Med Center stops
+      'Buckeye Lot (SB)': { lat: 40.00980, lng: -83.04295 },
+      'Carmack 2 (SB)': { lat: 40.00635, lng: -83.05330 },
+      'Carmack 3 (NB)': { lat: 40.00635, lng: -83.05330 },
+      'Fred Taylor & Schottenstein Dr (NB)': { lat: 40.01563, lng: -83.03005 },
+      'Kinnear Rd Lot (EB)': { lat: 40.01892, lng: -83.05468 },
+      'Knowlton Hall (EB)': { lat: 40.003535, lng: -83.016780 },
+      'Midwest Campus (EB)': { lat: 40.01455, lng: -83.02844 },
+      'Midwest Campus (WB)': { lat: 40.01452, lng: -83.02942 },
+      'Service Annex (WB)': { lat: 40.02466, lng: -83.05683 },
+      'Stillman Hall (SB)': { lat: 40.00174, lng: -83.01071 },
+      'Stores & Receiving (SB)': { lat: 40.01432, lng: -83.03557 },
+      
+      // Northwest Connector stops
+      'Blankenship Hall (EB)': { lat: 40.00483, lng: -83.02864 },
+      'Fisher Commons (NB)': { lat: 40.01147, lng: -83.04695 },
+      'Fontana Lab (EB)': { lat: 40.003656, lng: -83.012825 }
     };
+    
 
     uniqueStops.forEach(stopName => {
       const location = stopLocations[stopName] || { lat: 40.0000, lng: -83.0200 };
+      if (!stopLocations[stopName]) {
+        console.log(`Missing location for stop: ${stopName}`);
+      }
       this.stops.set(stopName, {
         id: csvDataService.mapStopNameToId(stopName),
         name: stopName,
@@ -63,6 +110,8 @@ class BusSimulationService {
         isFavorite: false
       });
     });
+    
+    console.log(`Setup ${this.stops.size} stops`);
   }
 
   // Setup routes from CSV data
