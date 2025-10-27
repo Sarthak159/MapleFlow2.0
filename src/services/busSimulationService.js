@@ -131,7 +131,17 @@ class BusSimulationService {
   getStopsForRoute(route) {
     const routeData = csvDataService.getDataForRoute(route);
     const uniqueStops = [...new Set(routeData.map(record => record.bus_stop))];
-    return uniqueStops.map(stopName => this.stops.get(stopName)).filter(Boolean);
+    return uniqueStops.map(stopName => {
+      const stop = this.stops.get(stopName);
+      if (stop) {
+        // Return a copy to prevent modification
+        return {
+          ...stop,
+          location: { ...stop.location }
+        };
+      }
+      return null;
+    }).filter(Boolean);
   }
 
   // Create buses based on CSV data
@@ -351,7 +361,16 @@ class BusSimulationService {
 
   // Get all stops
   getAllStops() {
-    return Array.from(this.stops.values());
+    const stops = Array.from(this.stops.values());
+    // Verify stops are stationary - log first stop location
+    if (stops.length > 0) {
+      console.log('First stop location:', stops[0].name, stops[0].location);
+    }
+    // Return copies to prevent modification
+    return stops.map(stop => ({
+      ...stop,
+      location: { ...stop.location }
+    }));
   }
 
   // Get buses for a specific route

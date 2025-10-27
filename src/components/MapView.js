@@ -47,6 +47,33 @@ const createBusIcon = (route, crowdLevel) => {
   });
 };
 
+// Custom stop marker icon
+const createStopIcon = () => {
+  return L.divIcon({
+    className: 'custom-stop-marker',
+    html: `
+      <div style="
+        background: #374151;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      ">
+        🚏
+      </div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
+
 // Component to auto-fit bounds (only on initial load)
 const MapBounds = ({ buses, isInitialLoad }) => {
   const map = useMap();
@@ -265,6 +292,10 @@ const MapView = () => {
           <div style={{ width: '12px', height: '12px', backgroundColor: '#ef4444', borderRadius: '50%', marginRight: '8px' }}></div>
           <span>High Crowding</span>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
+          <div style={{ width: '10px', height: '10px', backgroundColor: '#374151', borderRadius: '50%', marginRight: '8px' }}></div>
+          <span>Bus Stops</span>
+        </div>
         <button 
           onClick={() => setShowRoutes(!showRoutes)}
           style={{
@@ -326,6 +357,7 @@ const MapView = () => {
           <Marker
             key={stop.id}
             position={[stop.location.lat, stop.location.lng]}
+            icon={createStopIcon()}
             eventHandlers={{
               click: () => handleStopClick(stop),
             }}
