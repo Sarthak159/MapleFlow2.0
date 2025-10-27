@@ -2634,3 +2634,72 @@ body {
     font-size: 1.5rem;
   }
 }
+
+/* Mobile-specific improvements */
+@media (max-width: 480px) {
+  .map-legend {
+    top: 5px;
+    right: 5px;
+    padding: 8px;
+    font-size: 10px;
+    min-width: 120px;
+  }
+  
+  .map-controls {
+    top: 5px;
+    left: 5px;
+    gap: 6px;
+  }
+  
+  .map-control-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .bus-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .dashboard-map-section {
+    height: 300px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .sidebar-buckeyeride {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .main-content-buckeyeride {
+    margin-left: 0;
+    padding: 12px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .bus-card-buckeyeride {
+    padding: 16px;
+  }
+  
+  .control-btn, .map-control-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .metric-value {
+    font-size: 18px;
+  }
+}

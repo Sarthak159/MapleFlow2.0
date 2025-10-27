@@ -1,0 +1,22 @@
+{
+  "short_name": "MapleFlow",
+  "name": "MapleFlow Bus Tracker",
+  "description": "Real-time bus tracking with smart recommendations",
+  "icons": [
+    {
+      "src": "mapleflow-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6366f1",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["transportation", "travel", "utilities"],
+  "lang": "en",
+  "scope": "/",
+  "prefer_related_applications": false
+}
