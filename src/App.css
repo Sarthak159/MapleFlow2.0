@@ -988,14 +988,18 @@ body {
 .header-route-selector {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-gray);
+  gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
+  min-width: 140px;
+  justify-content: space-between;
 }
 
 /* Route Dropdown */
@@ -1011,7 +1015,23 @@ body {
   min-width: 220px;
 }
 
+.route-dropdown-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 0.9rem 0.25rem;
+}
+
+.route-dropdown-btn {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .route-option {
+  width: 100%;
   padding: 1rem;
   cursor: pointer;
   display: flex;
@@ -1019,6 +1039,11 @@ body {
   gap: 0.75rem;
   transition: background 0.2s;
   border-bottom: 1px solid var(--border-color);
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  background: transparent;
+  text-align: left;
 }
 
 .route-option:last-child {
@@ -1037,6 +1062,30 @@ body {
 
 .route-check {
   color: var(--primary-color);
+  margin-left: auto;
+}
+
+.route-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.route-option-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.route-option-copy span {
+  font-weight: 700;
+  color: #111827;
+}
+
+.route-option-copy small {
+  color: #6b7280;
+  font-size: 0.78rem;
 }
 
 /* Passenger Pass Banner */

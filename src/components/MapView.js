@@ -8,6 +8,7 @@ import {
   Polyline,
 } from "react-leaflet";
 import L from "leaflet";
+import { CheckSquare, Square } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { useBus } from "../context/BusContext";
 
@@ -92,12 +93,17 @@ const MapView = () => {
   const {
     buses,
     routes,
+    allRoutes,
     stops,
     getCrowdEmoji,
     getCrowdText,
     getRecommendation,
     roundToSignificantFigures,
     getRouteColor,
+    selectedRouteCodes,
+    toggleRouteSelection,
+    selectAllRoutes,
+    showOnlyRoute,
   } = useBus();
   const [showRoutes, setShowRoutes] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -144,6 +150,118 @@ const MapView = () => {
         >
           {showRoutes ? "Hide" : "Show"} Routes
         </button>
+        <div style={{ marginTop: "10px", fontWeight: 700, color: "#111827" }}>
+          Visible routes and buses
+        </div>
+        <button
+          onClick={selectAllRoutes}
+          style={{
+            marginTop: "8px",
+            padding: "4px 8px",
+            fontSize: "12px",
+            backgroundColor: "#eff6ff",
+            color: "#2563eb",
+            border: "1px solid #bfdbfe",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Show all routes
+        </button>
+        <div
+          style={{
+            marginTop: "8px",
+            display: "grid",
+            gap: "6px",
+            maxWidth: "280px",
+          }}
+        >
+          {allRoutes.map((route) => {
+            const isSelected = selectedRouteCodes.includes(route.code);
+
+            return (
+              <div
+                key={route.code}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                  padding: "8px 10px",
+                  borderRadius: "10px",
+                  border: `1px solid ${isSelected ? getRouteColor(route.code) : "#d1d5db"}`,
+                  background: isSelected ? `${getRouteColor(route.code)}12` : "white",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleRouteSelection(route.code)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    color: "#111827",
+                    padding: 0,
+                    flex: 1,
+                    minWidth: 0,
+                    textAlign: "left",
+                  }}
+                  title={`Toggle ${route.code}`}
+                >
+                  {isSelected ? (
+                    <CheckSquare size={16} color={getRouteColor(route.code)} />
+                  ) : (
+                    <Square size={16} color="#6b7280" />
+                  )}
+                  <span
+                    style={{
+                      width: "10px",
+                      height: "10px",
+                      borderRadius: "999px",
+                      background: getRouteColor(route.code),
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: "12px", fontWeight: 700 }}>
+                    {route.code}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#4b5563",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {route.name}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => showOnlyRoute(route.code)}
+                  style={{
+                    border: "none",
+                    background: getRouteColor(route.code),
+                    color: "white",
+                    borderRadius: "999px",
+                    padding: "4px 8px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                  title={`Show only ${route.code}`}
+                >
+                  Only
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <MapContainer

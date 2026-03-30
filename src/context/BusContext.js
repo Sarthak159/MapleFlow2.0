@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { fetchOsuBusSnapshot } from "../services/osuBusApi";
@@ -11,6 +12,7 @@ const BusContext = createContext();
 const POLL_INTERVAL_MS = 20000;
 const FAVORITES_STORAGE_KEY = "mapleflow.favoriteStops";
 const CROWD_OVERRIDE_STORAGE_KEY = "mapleflow.crowdOverrides";
+const SELECTED_ROUTES_STORAGE_KEY = "mapleflow.selectedRoutes";
 
 function readJsonStorage(key, fallbackValue) {
   if (typeof window === "undefined") {
@@ -98,9 +100,9 @@ export const useBus = () => {
 };
 
 export const BusProvider = ({ children }) => {
-  const [buses, setBuses] = useState([]);
-  const [routes, setRoutes] = useState([]);
-  const [stops, setStops] = useState([]);
+  const [allBuses, setAllBuses] = useState([]);
+  const [allRoutes, setAllRoutes] = useState([]);
+  const [allStops, setAllStops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -111,6 +113,9 @@ export const BusProvider = ({ children }) => {
   );
   const [crowdOverrides, setCrowdOverrides] = useState(() =>
     readJsonStorage(CROWD_OVERRIDE_STORAGE_KEY, {})
+  );
+  const [selectedRouteCodes, setSelectedRouteCodes] = useState(() =>
+    readJsonStorage(SELECTED_ROUTES_STORAGE_KEY, [])
   );
 
   useEffect(() => {
@@ -137,6 +142,18 @@ export const BusProvider = ({ children }) => {
     return undefined;
   }, [crowdOverrides]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.localStorage.setItem(
+      SELECTED_ROUTES_STORAGE_KEY,
+      JSON.stringify(selectedRouteCodes)
+    );
+    return undefined;
+  }, [selectedRouteCodes]);
+
   const refreshData = useCallback(async () => {
     const controller = new AbortController();
 
@@ -149,9 +166,23 @@ export const BusProvider = ({ children }) => {
         crowdOverrides
       );
 
-      setRoutes(decoratedSnapshot.routes);
-      setStops(decoratedSnapshot.stops);
-      setBuses(decoratedSnapshot.vehicles);
+      setAllRoutes(decoratedSnapshot.routes);
+      setAllStops(decoratedSnapshot.stops);
+      setAllBuses(decoratedSnapshot.vehicles);
+      setSelectedRouteCodes((previousCodes) => {
+        if (previousCodes.length === 0) {
+          return decoratedSnapshot.routes.map((route) => route.code);
+        }
+
+        const availableCodes = new Set(
+          decoratedSnapshot.routes.map((route) => route.code)
+        );
+        const nextCodes = previousCodes.filter((code) => availableCodes.has(code));
+
+        return nextCodes.length > 0
+          ? nextCodes
+          : decoratedSnapshot.routes.map((route) => route.code);
+      });
       setLastUpdated(decoratedSnapshot.generatedAt);
       setIsStale(Boolean(decoratedSnapshot.stale));
       setDataSource(decoratedSnapshot.dataSource || "OSU Bus API");
@@ -181,7 +212,7 @@ export const BusProvider = ({ children }) => {
         ? previousIds.filter((id) => id !== stopId)
         : [...previousIds, stopId];
 
-      setStops((previousStops) =>
+      setAllStops((previousStops) =>
         previousStops.map((stop) =>
           stop.id === stopId
             ? { ...stop, isFavorite: !stop.isFavorite }
@@ -199,7 +230,7 @@ export const BusProvider = ({ children }) => {
       [busId]: { crowdLevel },
     }));
 
-    setBuses((previousBuses) =>
+    setAllBuses((previousBuses) =>
       previousBuses.map((bus) =>
         bus.id === busId
           ? applyCrowdOverride(bus, { crowdLevel })
@@ -248,7 +279,7 @@ export const BusProvider = ({ children }) => {
 
   const getRecommendation = (bus) => {
     const eta = bus.etaMinutes ?? bus.eta;
-    const nextRouteBus = buses
+    const nextRouteBus = allBuses
       .filter(
         (candidate) =>
           candidate.routeCode === bus.routeCode &&
@@ -273,18 +304,71 @@ export const BusProvider = ({ children }) => {
       return "Live vehicle detected, but arrival time is not currently available.";
     }
 
-    return `Estimated arrival in ${eta} min.`;
+      return `Estimated arrival in ${eta} min.`;
   };
 
   const getRouteStops = useCallback(
-    (routeCode) => routes.find((route) => route.code === routeCode)?.stops || [],
-    [routes]
+    (routeCode) => allRoutes.find((route) => route.code === routeCode)?.stops || [],
+    [allRoutes]
   );
 
   const getRouteColor = useCallback(
     (routeCode) =>
-      routes.find((route) => route.code === routeCode)?.color || "#6366f1",
-    [routes]
+      allRoutes.find((route) => route.code === routeCode)?.color || "#6366f1",
+    [allRoutes]
+  );
+
+  const toggleRouteSelection = useCallback((routeCode) => {
+    setSelectedRouteCodes((previousCodes) => {
+      const isSelected = previousCodes.includes(routeCode);
+
+      if (isSelected && previousCodes.length === 1) {
+        return previousCodes;
+      }
+
+      return isSelected
+        ? previousCodes.filter((code) => code !== routeCode)
+        : [...previousCodes, routeCode];
+    });
+  }, []);
+
+  const selectAllRoutes = useCallback(() => {
+    setSelectedRouteCodes(allRoutes.map((route) => route.code));
+  }, [allRoutes]);
+
+  const showOnlyRoute = useCallback((routeCode) => {
+    setSelectedRouteCodes([routeCode]);
+  }, []);
+
+  const clearRouteSelection = useCallback(() => {
+    if (allRoutes.length > 0) {
+      setSelectedRouteCodes([allRoutes[0].code]);
+    }
+  }, [allRoutes]);
+
+  const selectedRouteCodeSet = useMemo(
+    () => new Set(selectedRouteCodes),
+    [selectedRouteCodes]
+  );
+
+  const routes = useMemo(
+    () =>
+      allRoutes.filter((route) => selectedRouteCodeSet.has(route.code)),
+    [allRoutes, selectedRouteCodeSet]
+  );
+
+  const buses = useMemo(
+    () =>
+      allBuses.filter((bus) => selectedRouteCodeSet.has(bus.routeCode)),
+    [allBuses, selectedRouteCodeSet]
+  );
+
+  const stops = useMemo(
+    () =>
+      allStops.filter((stop) =>
+        stop.routeCodes.some((routeCode) => selectedRouteCodeSet.has(routeCode))
+      ),
+    [allStops, selectedRouteCodeSet]
   );
 
   const roundToSignificantFigures = (value, figures = 1) => {
@@ -299,8 +383,11 @@ export const BusProvider = ({ children }) => {
 
   const value = {
     buses,
+    allBuses,
     routes,
+    allRoutes,
     stops,
+    allStops,
     loading,
     error,
     lastUpdated,
@@ -315,6 +402,11 @@ export const BusProvider = ({ children }) => {
     toggleFavoriteStop,
     getRouteStops,
     getRouteColor,
+    selectedRouteCodes,
+    toggleRouteSelection,
+    selectAllRoutes,
+    showOnlyRoute,
+    clearRouteSelection,
     roundToSignificantFigures,
   };
 

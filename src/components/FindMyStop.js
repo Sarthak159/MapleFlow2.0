@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { MapPin, Clock, Bus, Star } from "lucide-react";
 import { useBus } from "../context/BusContext";
 
@@ -10,6 +10,12 @@ const FindMyStop = () => {
     () => stops.find((stop) => stop.id === selectedStopId) || null,
     [selectedStopId, stops]
   );
+
+  useEffect(() => {
+    if (selectedStopId && !selectedStop) {
+      setSelectedStopId(null);
+    }
+  }, [selectedStop, selectedStopId]);
 
   const getBusesForStop = (stopId) => {
     return buses
