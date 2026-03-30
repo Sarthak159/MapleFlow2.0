@@ -4,6 +4,7 @@ import { useBus } from "../context/BusContext";
 import BusCard from "./BusCard";
 import MapView from "./MapView";
 import CrowdFeedbackModal from "./CrowdFeedbackModal";
+import RouteFilter from "./RouteFilter";
 
 const Dashboard = () => {
   const {
@@ -85,6 +86,9 @@ const Dashboard = () => {
           <p className="dashboard-subtitle">
             Real-time arrivals and stop locations with estimated crowding
           </p>
+          <div style={{ marginTop: "14px" }}>
+            <RouteFilter />
+          </div>
           <div
             style={{
               display: "flex",
