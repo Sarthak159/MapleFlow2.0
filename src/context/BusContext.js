@@ -1,120 +1,212 @@
-// BusContext.js
-import React, { createContext, useContext, useState, useEffect } from "react";
-import io from "socket.io-client";
-import busSimulationService from "../services/busSimulationService";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { fetchOsuBusSnapshot } from "../services/osuBusApi";
 
 const BusContext = createContext();
+const POLL_INTERVAL_MS = 20000;
+const FAVORITES_STORAGE_KEY = "mapleflow.favoriteStops";
+const CROWD_OVERRIDE_STORAGE_KEY = "mapleflow.crowdOverrides";
+
+function readJsonStorage(key, fallbackValue) {
+  if (typeof window === "undefined") {
+    return fallbackValue;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(key);
+    return rawValue ? JSON.parse(rawValue) : fallbackValue;
+  } catch (error) {
+    return fallbackValue;
+  }
+}
+
+function getComfortScoreForLevel(level) {
+  switch (level) {
+    case "low":
+      return 8.6;
+    case "medium":
+      return 7.4;
+    case "high":
+      return 6.2;
+    default:
+      return 7.4;
+  }
+}
+
+function getPassengerCountForLevel(level, capacity) {
+  switch (level) {
+    case "low":
+      return Math.round(capacity * 0.35);
+    case "medium":
+      return Math.round(capacity * 0.6);
+    case "high":
+      return Math.round(capacity * 0.9);
+    default:
+      return Math.round(capacity * 0.6);
+  }
+}
+
+function applyCrowdOverride(bus, override) {
+  if (!override) {
+    return bus;
+  }
+
+  const capacity = bus.capacity || 50;
+
+  return {
+    ...bus,
+    crowdLevel: override.crowdLevel,
+    passengerCount: getPassengerCountForLevel(override.crowdLevel, capacity),
+    comfortScore: getComfortScoreForLevel(override.crowdLevel),
+    crowdSource: "user-feedback",
+    isEstimatedCrowding: true,
+  };
+}
+
+function decorateSnapshot(snapshot, favoriteStopIds, crowdOverrides) {
+  const favoriteIds = new Set(favoriteStopIds);
+
+  return {
+    ...snapshot,
+    stops: snapshot.stops.map((stop) => ({
+      ...stop,
+      isFavorite: favoriteIds.has(stop.id),
+    })),
+    vehicles: snapshot.vehicles.map((vehicle) => {
+      const bus = {
+        ...vehicle,
+        currentStop: vehicle.currentStopName,
+      };
+      return applyCrowdOverride(bus, crowdOverrides[vehicle.id]);
+    }),
+  };
+}
 
 export const useBus = () => {
   const context = useContext(BusContext);
+
   if (!context) {
     throw new Error("useBus must be used within a BusProvider");
   }
+
   return context;
 };
 
 export const BusProvider = ({ children }) => {
   const [buses, setBuses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
+  const [routes, setRoutes] = useState([]);
   const [stops, setStops] = useState([]);
-  const [simulationStatus, setSimulationStatus] = useState({
-    isPlaying: false,
-    speed: 1,
-    currentTime: null
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [isStale, setIsStale] = useState(false);
+  const [dataSource, setDataSource] = useState("OSU Bus API");
+  const [favoriteStopIds, setFavoriteStopIds] = useState(() =>
+    readJsonStorage(FAVORITES_STORAGE_KEY, [])
+  );
+  const [crowdOverrides, setCrowdOverrides] = useState(() =>
+    readJsonStorage(CROWD_OVERRIDE_STORAGE_KEY, {})
+  );
 
   useEffect(() => {
-    // Initialize simulation service
-    initializeSimulation();
+    if (typeof window === "undefined") {
+      return undefined;
+    }
 
-    // Initialize socket connection (optional for real-time features)
-    const newSocket = io("ws://localhost:3001");
-    setSocket(newSocket);
+    window.localStorage.setItem(
+      FAVORITES_STORAGE_KEY,
+      JSON.stringify(favoriteStopIds)
+    );
+    return undefined;
+  }, [favoriteStopIds]);
 
-    // Listen for real-time bus updates
-    newSocket.on("busUpdate", (busData) => {
-      setBuses((prevBuses) =>
-        prevBuses.map((bus) =>
-          bus.id === busData.id ? { ...bus, ...busData } : bus
-        )
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.localStorage.setItem(
+      CROWD_OVERRIDE_STORAGE_KEY,
+      JSON.stringify(crowdOverrides)
+    );
+    return undefined;
+  }, [crowdOverrides]);
+
+  const refreshData = useCallback(async () => {
+    const controller = new AbortController();
+
+    try {
+      setError(null);
+      const snapshot = await fetchOsuBusSnapshot(controller.signal);
+      const decoratedSnapshot = decorateSnapshot(
+        snapshot,
+        favoriteStopIds,
+        crowdOverrides
       );
-    });
+
+      setRoutes(decoratedSnapshot.routes);
+      setStops(decoratedSnapshot.stops);
+      setBuses(decoratedSnapshot.vehicles);
+      setLastUpdated(decoratedSnapshot.generatedAt);
+      setIsStale(Boolean(decoratedSnapshot.stale));
+      setDataSource(decoratedSnapshot.dataSource || "OSU Bus API");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+
+    return () => controller.abort();
+  }, [crowdOverrides, favoriteStopIds]);
+
+  useEffect(() => {
+    refreshData();
+    const intervalId = window.setInterval(() => {
+      refreshData();
+    }, POLL_INTERVAL_MS);
 
     return () => {
-      newSocket.close();
-      // Clean up simulation listeners
-      busSimulationService.removeListener(handleBusUpdate);
+      window.clearInterval(intervalId);
     };
+  }, [refreshData]);
+
+  const toggleFavoriteStop = useCallback((stopId) => {
+    setFavoriteStopIds((previousIds) => {
+      const nextIds = previousIds.includes(stopId)
+        ? previousIds.filter((id) => id !== stopId)
+        : [...previousIds, stopId];
+
+      setStops((previousStops) =>
+        previousStops.map((stop) =>
+          stop.id === stopId
+            ? { ...stop, isFavorite: !stop.isFavorite }
+            : stop
+        )
+      );
+
+      return nextIds;
+    });
   }, []);
 
-  // Initialize the simulation service
-  const initializeSimulation = async () => {
-    try {
-      setLoading(true);
-      const success = await busSimulationService.initialize();
-      
-      if (success) {
-        // Get initial data
-        const initialBuses = busSimulationService.getAllBuses();
-        const initialStops = busSimulationService.getAllStops();
-        
-        setBuses(initialBuses);
-        setStops(initialStops);
-        
-        // Add listener for bus updates
-        busSimulationService.addListener(handleBusUpdate);
-        
-        // Start simulation
-        busSimulationService.startSimulation();
-        setSimulationStatus(prev => ({ ...prev, isPlaying: true }));
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error("Error initializing simulation:", error);
-      setLoading(false);
-    }
-  };
+  const updateCrowdLevel = useCallback((busId, crowdLevel) => {
+    setCrowdOverrides((previousOverrides) => ({
+      ...previousOverrides,
+      [busId]: { crowdLevel },
+    }));
 
-  // Handle bus updates from simulation
-  const handleBusUpdate = (updatedBuses) => {
-    setBuses(updatedBuses);
-  };
-
-  // Simulation control functions
-  const startSimulation = () => {
-    busSimulationService.startSimulation();
-    setSimulationStatus(prev => ({ ...prev, isPlaying: true }));
-  };
-
-  const pauseSimulation = () => {
-    busSimulationService.pauseSimulation();
-    setSimulationStatus(prev => ({ ...prev, isPlaying: false }));
-  };
-
-  const stopSimulation = () => {
-    busSimulationService.stopSimulation();
-    setSimulationStatus(prev => ({ ...prev, isPlaying: false }));
-  };
-
-  const setSimulationSpeed = (speed) => {
-    busSimulationService.setSimulationSpeed(speed);
-    setSimulationStatus(prev => ({ ...prev, speed }));
-  };
-
-  const updateCrowdLevel = (busId, level) => {
-    setBuses((prevBuses) =>
-      prevBuses.map((bus) =>
-        bus.id === busId ? { ...bus, crowdLevel: level } : bus
+    setBuses((previousBuses) =>
+      previousBuses.map((bus) =>
+        bus.id === busId
+          ? applyCrowdOverride(bus, { crowdLevel })
+          : bus
       )
     );
-
-    // Send update to server
-    if (socket) {
-      socket.emit("crowdUpdate", { busId, level });
-    }
-  };
+  }, []);
 
   const getCrowdEmoji = (level) => {
     switch (level) {
@@ -143,65 +235,88 @@ export const BusProvider = ({ children }) => {
   };
 
   const getComfortColor = (score) => {
-    if (score >= 8) return "#28a745";
-    if (score >= 6) return "#ffc107";
+    if (score >= 8) {
+      return "#28a745";
+    }
+
+    if (score >= 6) {
+      return "#ffc107";
+    }
+
     return "#dc3545";
   };
 
   const getRecommendation = (bus) => {
-    const { eta, nextEta, crowdLevel, comfortScore } = bus;
-    const timeDifference = nextEta - eta;
-
-    if (crowdLevel === "low" && timeDifference <= 5) {
-      return `Recommended: Wait ${timeDifference} more minutes for a less crowded bus`;
-    } else if (crowdLevel === "high" && timeDifference <= 3) {
-      return `Consider waiting for the next bus (${timeDifference} min later) for better comfort`;
-    } else if (comfortScore >= 8) {
-      return `Great choice! This bus offers excellent comfort`;
-    } else {
-      return `Arriving soon - moderate comfort level`;
-    }
-  };
-
-  const toggleFavoriteStop = (stopId) => {
-    setStops(prevStops =>
-      prevStops.map(stop =>
-        stop.id === stopId ? { ...stop, isFavorite: !stop.isFavorite } : stop
+    const eta = bus.etaMinutes ?? bus.eta;
+    const nextRouteBus = buses
+      .filter(
+        (candidate) =>
+          candidate.routeCode === bus.routeCode &&
+          candidate.id !== bus.id &&
+          (candidate.etaMinutes ?? candidate.eta) !== null &&
+          (candidate.etaMinutes ?? candidate.eta) > eta
       )
-    );
+      .sort(
+        (left, right) =>
+          (left.etaMinutes ?? left.eta) - (right.etaMinutes ?? right.eta)
+      )[0];
+
+    if (bus.crowdLevel === "high" && nextRouteBus) {
+      return `Crowded now. Next ${bus.routeCode} arrives in ${nextRouteBus.etaMinutes ?? nextRouteBus.eta} min.`;
+    }
+
+    if (bus.crowdLevel === "low") {
+      return "Low estimated crowding on this bus.";
+    }
+
+    if (eta === null || eta === undefined) {
+      return "Live vehicle detected, but arrival time is not currently available.";
+    }
+
+    return `Estimated arrival in ${eta} min.`;
   };
 
-  const getRouteStops = (routeName) => {
-    return busSimulationService.getStopsForRoute(routeName);
-  };
+  const getRouteStops = useCallback(
+    (routeCode) => routes.find((route) => route.code === routeCode)?.stops || [],
+    [routes]
+  );
 
-  // Round to one significant figure
-  const roundToSignificantFigures = (num, figures = 1) => {
-    if (num === 0) return 0;
-    const magnitude = Math.floor(Math.log10(Math.abs(num)));
-    const factor = Math.pow(10, figures - 1 - magnitude);
-    return Math.round(num * factor) / factor;
+  const getRouteColor = useCallback(
+    (routeCode) =>
+      routes.find((route) => route.code === routeCode)?.color || "#6366f1",
+    [routes]
+  );
+
+  const roundToSignificantFigures = (value, figures = 1) => {
+    if (!value) {
+      return 0;
+    }
+
+    const magnitude = Math.floor(Math.log10(Math.abs(value)));
+    const factor = 10 ** (figures - 1 - magnitude);
+    return Math.round(value * factor) / factor;
   };
 
   const value = {
     buses,
-    loading,
+    routes,
     stops,
-    simulationStatus,
+    loading,
+    error,
+    lastUpdated,
+    isStale,
+    dataSource,
     updateCrowdLevel,
+    refreshData,
     getCrowdEmoji,
     getCrowdText,
     getComfortColor,
     getRecommendation,
     toggleFavoriteStop,
-    startSimulation,
-    pauseSimulation,
-    stopSimulation,
-    setSimulationSpeed,
     getRouteStops,
+    getRouteColor,
     roundToSignificantFigures,
   };
 
   return <BusContext.Provider value={value}>{children}</BusContext.Provider>;
-  
 };

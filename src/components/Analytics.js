@@ -1,5 +1,4 @@
-// Analytics.js
-import React, { useState } from "react";
+import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,7 +12,7 @@ import {
   ArcElement,
 } from "chart.js";
 import { Bar, Line, Doughnut } from "react-chartjs-2";
-import { TrendingUp, Users, Clock, MapPin, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, Users, Clock, BarChart3, Activity } from "lucide-react";
 import { useBus } from "../context/BusContext";
 
 ChartJS.register(
@@ -29,53 +28,91 @@ ChartJS.register(
 );
 
 const Analytics = () => {
-  const { buses, stops, roundToSignificantFigures } = useBus();
-  const [selectedTimeframe, setSelectedTimeframe] = useState("week");
+  const { buses, stops, routes, roundToSignificantFigures, getRouteColor } = useBus();
 
-  // Calculate real-time statistics
-  const totalPassengers = buses.reduce((sum, bus) => sum + bus.passengerCount, 0);
-  const avgOccupancy = Math.round(
-    buses.reduce((sum, bus) => sum + (bus.passengerCount / bus.capacity) * 100, 0) / buses.length
-  );
-  const avgComfort = roundToSignificantFigures(buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length);
-  
-  // Top 5 busiest stops by bus count (varies by timeframe)
-  const getStopData = () => {
-    if (selectedTimeframe === 'day') {
-      return [
-        { name: "Ohio Union", count: 52 },
-        { name: "Herrick Transit Hub", count: 48 },
-        { name: "Arps Hall", count: 42 },
-        { name: "Mack Hall", count: 35 },
-        { name: "Scarlet", count: 30 },
-      ];
-    } else if (selectedTimeframe === 'week') {
-      return [
-        { name: "Ohio Union", count: 364 },
-        { name: "Herrick Transit Hub", count: 336 },
-        { name: "Arps Hall", count: 294 },
-        { name: "Mack Hall", count: 245 },
-        { name: "Scarlet", count: 210 },
-      ];
-    } else { // month
-      return [
-        { name: "Ohio Union", count: 1560 },
-        { name: "Herrick Transit Hub", count: 1440 },
-        { name: "Arps Hall", count: 1260 },
-        { name: "Mack Hall", count: 1050 },
-        { name: "Scarlet", count: 900 },
-      ];
-    }
-  };
+  const avgEta =
+    buses.length > 0
+      ? Math.round(
+          buses.reduce((sum, bus) => sum + (bus.etaMinutes ?? 0), 0) / buses.length
+        )
+      : 0;
+  const avgOccupancy =
+    buses.length > 0
+      ? Math.round(
+          buses.reduce(
+            (sum, bus) => sum + (bus.passengerCount / (bus.capacity || 50)) * 100,
+            0
+          ) / buses.length
+        )
+      : 0;
+  const avgComfort =
+    buses.length > 0
+      ? roundToSignificantFigures(
+          buses.reduce((sum, bus) => sum + bus.comfortScore, 0) / buses.length
+        )
+      : 0;
 
-  const topStops = getStopData();
+  const stopCounts = stops
+    .map((stop) => ({
+      name: stop.name,
+      count: buses.filter(
+        (bus) =>
+          bus.currentStopId === stop.id ||
+          bus.nextStops.some((prediction) => prediction.stopId === stop.id)
+      ).length,
+    }))
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 5);
 
-  const stopAnalytics = {
-    labels: topStops.map(stop => stop.name),
+  const etaBuckets = [
+    { label: "0-5 min", min: 0, max: 5 },
+    { label: "6-10 min", min: 6, max: 10 },
+    { label: "11-15 min", min: 11, max: 15 },
+    { label: "16+ min", min: 16, max: Infinity },
+  ];
+
+  const peakHoursData = {
+    labels: etaBuckets.map((bucket) => bucket.label),
     datasets: [
       {
-        label: "Average Passengers/Hour",
-        data: topStops.map(stop => stop.count),
+        label: "Live arrivals",
+        data: etaBuckets.map((bucket) =>
+          buses.filter(
+            (bus) =>
+              (bus.etaMinutes ?? Infinity) >= bucket.min &&
+              (bus.etaMinutes ?? Infinity) <= bucket.max
+          ).length
+        ),
+        borderColor: "rgba(59, 130, 246, 1)",
+        backgroundColor: "rgba(59, 130, 246, 0.15)",
+        tension: 0.35,
+        fill: true,
+      },
+    ],
+  };
+
+  const routeDistribution = {
+    labels: routes.map((route) => route.code),
+    datasets: [
+      {
+        data: routes.map((route) =>
+          buses
+            .filter((bus) => bus.routeCode === route.code)
+            .reduce((sum, bus) => sum + bus.passengerCount, 0)
+        ),
+        backgroundColor: routes.map((route) => `${getRouteColor(route.code)}cc`),
+        borderColor: routes.map((route) => getRouteColor(route.code)),
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const stopAnalytics = {
+    labels: stopCounts.map((stop) => stop.name),
+    datasets: [
+      {
+        label: "Buses serving stop now",
+        data: stopCounts.map((stop) => stop.count),
         backgroundColor: [
           "rgba(59, 130, 246, 0.8)",
           "rgba(139, 92, 246, 0.8)",
@@ -83,100 +120,7 @@ const Analytics = () => {
           "rgba(16, 185, 129, 0.8)",
           "rgba(251, 146, 60, 0.8)",
         ],
-        borderColor: [
-          "rgba(59, 130, 246, 1)",
-          "rgba(139, 92, 246, 1)",
-          "rgba(236, 72, 153, 1)",
-          "rgba(16, 185, 129, 1)",
-          "rgba(251, 146, 60, 1)",
-        ],
-        borderWidth: 2,
         borderRadius: 8,
-      },
-    ],
-  };
-
-  const getPeakHoursData = () => {
-    if (selectedTimeframe === 'day') {
-      return {
-        labels: ["6AM", "8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM"],
-        data: [15, 45, 68, 35, 42, 62, 38, 22],
-      };
-    } else if (selectedTimeframe === 'week') {
-      return {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        data: [280, 320, 340, 335, 310, 180, 150],
-      };
-    } else { // month
-      return {
-        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-        data: [1200, 1350, 1280, 1150],
-      };
-    }
-  };
-
-  const peakHoursInfo = getPeakHoursData();
-
-  const peakHoursData = {
-    labels: peakHoursInfo.labels,
-    datasets: [
-      {
-        label: "Passenger Count",
-        data: peakHoursInfo.data,
-        borderColor: "rgba(59, 130, 246, 1)",
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: "rgba(59, 130, 246, 1)",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-      },
-    ],
-  };
-
-  // Calculate crowd (total passengers) by route
-  const crowdByRoute = buses.reduce((acc, bus) => {
-    if (!acc[bus.route]) {
-      acc[bus.route] = 0;
-    }
-    acc[bus.route] += bus.passengerCount;
-    return acc;
-  }, {});
-
-  const routeDistribution = {
-    labels: ["CC", "BE", "CLS", "ER", "MC", "NWC", "WMC"],
-    datasets: [
-      {
-        data: [
-          crowdByRoute["CC"] || 0,
-          crowdByRoute["BE"] || 0,
-          crowdByRoute["CLS"] || 0,
-          crowdByRoute["ER"] || 0,
-          crowdByRoute["MC"] || 0,
-          crowdByRoute["NWC"] || 0,
-          crowdByRoute["WMC"] || 0,
-        ],
-        backgroundColor: [
-          "rgba(220, 38, 38, 0.8)",
-          "rgba(59, 130, 246, 0.8)",
-          "rgba(239, 68, 68, 0.8)",
-          "rgba(16, 185, 129, 0.8)",
-          "rgba(139, 92, 246, 0.8)",
-          "rgba(236, 72, 153, 0.8)",
-          "rgba(6, 182, 212, 0.8)",
-        ],
-        borderColor: [
-          "rgba(220, 38, 38, 1)",
-          "rgba(59, 130, 246, 1)",
-          "rgba(239, 68, 68, 1)",
-          "rgba(16, 185, 129, 1)",
-          "rgba(139, 92, 246, 1)",
-          "rgba(236, 72, 153, 1)",
-          "rgba(6, 182, 212, 1)",
-        ],
-        borderWidth: 2,
       },
     ],
   };
@@ -184,93 +128,7 @@ const Analytics = () => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 13,
-        },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-    },
-  };
-
-  const lineChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 13,
-        },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-    },
+    plugins: { legend: { display: false } },
   };
 
   const doughnutOptions = {
@@ -278,166 +136,103 @@ const Analytics = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "right",
-        labels: {
-          padding: 15,
-          font: {
-            size: 13,
-          },
-          usePointStyle: true,
-          pointStyle: 'circle',
-        },
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 13,
-        },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 1,
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.parsed || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${value} passengers (${percentage}%)`;
-          }
-        }
+        position: "bottom",
       },
     },
   };
 
-  const insights = [
-    {
-      icon: <TrendingUp size={24} />,
-      title: "Peak Usage Time",
-      value: "10:00-11:00 AM",
-      description: "Highest passenger volume during class changes",
-      color: "blue",
-    },
-    {
-      icon: <Users size={24} />,
-      title: "Busiest Stop",
-      value: "Ohio Union",
-      description: "52 passengers/hour average",
-      color: "purple",
-    },
-    {
-      icon: <Clock size={24} />,
-      title: "Avg Wait Time",
-      value: "5.2 minutes",
-      description: "Average across all routes",
-      color: "green",
-    },
-    {
-      icon: <Activity size={24} />,
-      title: "System Efficiency",
-      value: `${avgOccupancy}%`,
-      description: "Average bus occupancy rate",
-      color: "orange",
-    },
-  ];
-
   return (
-    <div className="analytics-buckeyeride">
-      {/* Header */}
-      <div className="analytics-header-buckeyeride">
-        <div className="analytics-title-section">
-          <div className="analytics-icon-title">
+    <div className="analytics-page-buckeyeride">
+      <div className="dashboard-top-header">
+        <div className="header-content">
+          <h1 className="dashboard-title">Transit Analytics</h1>
+          <p className="dashboard-subtitle">
+            Live OSU arrivals with estimated crowding overlays
+          </p>
+        </div>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-content">
+            <h3 className="stat-label">Average ETA</h3>
+            <p className="stat-value">{avgEta} min</p>
+          </div>
+          <div className="stat-icon comfort-icon">
+            <Clock size={32} />
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <h3 className="stat-label">Estimated Occupancy</h3>
+            <p className="stat-value">{avgOccupancy}%</p>
+          </div>
+          <div className="stat-icon passengers-icon">
+            <Users size={32} />
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <h3 className="stat-label">Estimated Comfort</h3>
+            <p className="stat-value">{avgComfort}/10</p>
+          </div>
+          <div className="stat-icon comfort-icon">
+            <TrendingUp size={32} />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "24px",
+        }}
+      >
+        <div className="stat-card" style={{ minHeight: "360px" }}>
+          <div className="stat-content" style={{ width: "100%" }}>
+            <h3 className="stat-label">Busiest Stops Right Now</h3>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+              Based on live vehicle predictions
+            </p>
+            <div style={{ height: "260px" }}>
+              <Bar data={stopAnalytics} options={chartOptions} />
+            </div>
+          </div>
+          <div className="stat-icon bus-icon">
             <BarChart3 size={32} />
-            <div>
-              <h1>Analytics Dashboard</h1>
-              <p>Real-time insights and performance metrics</p>
+          </div>
+        </div>
+
+        <div className="stat-card" style={{ minHeight: "360px" }}>
+          <div className="stat-content" style={{ width: "100%" }}>
+            <h3 className="stat-label">Arrival Distribution</h3>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+              Count of buses by next predicted arrival bucket
+            </p>
+            <div style={{ height: "260px" }}>
+              <Line data={peakHoursData} options={chartOptions} />
             </div>
           </div>
+          <div className="stat-icon comfort-icon">
+            <Activity size={32} />
+          </div>
         </div>
-        
-        <div className="timeframe-selector-buckeyeride">
-          <button
-            className={selectedTimeframe === "day" ? "active" : ""}
-            onClick={() => setSelectedTimeframe("day")}
-          >
-            Day
-          </button>
-          <button
-            className={selectedTimeframe === "week" ? "active" : ""}
-            onClick={() => setSelectedTimeframe("week")}
-          >
-            Week
-          </button>
-          <button
-            className={selectedTimeframe === "month" ? "active" : ""}
-            onClick={() => setSelectedTimeframe("month")}
-          >
-            Month
-          </button>
-        </div>
-      </div>
 
-      {/* Key Insights Grid */}
-      <div className="insights-grid-buckeyeride">
-        {insights.map((insight, index) => (
-          <div key={index} className={`insight-card-buckeyeride ${insight.color}`}>
-            <div className="insight-icon-buckeyeride">{insight.icon}</div>
-            <div className="insight-content-buckeyeride">
-              <h3>{insight.title}</h3>
-              <div className="insight-value-buckeyeride">{insight.value}</div>
-              <p>{insight.description}</p>
+        <div className="stat-card" style={{ minHeight: "360px" }}>
+          <div className="stat-content" style={{ width: "100%" }}>
+            <h3 className="stat-label">Estimated Occupancy by Route</h3>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+              Derived from CSV crowd estimates layered on live vehicles
+            </p>
+            <div style={{ height: "260px" }}>
+              <Doughnut data={routeDistribution} options={doughnutOptions} />
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Charts Grid */}
-      <div className="charts-grid-buckeyeride">
-        {/* Bar Chart - Stop Analytics */}
-        <div className="chart-card-buckeyeride large">
-          <div className="chart-header-buckeyeride">
-            <h3>Busiest Stops</h3>
-            <p>
-              {selectedTimeframe === 'day' && 'Passengers today'}
-              {selectedTimeframe === 'week' && 'Passengers this week'}
-              {selectedTimeframe === 'month' && 'Passengers this month'}
-            </p>
-          </div>
-          <div className="chart-container-buckeyeride">
-            <Bar data={stopAnalytics} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Line Chart - Peak Hours */}
-        <div className="chart-card-buckeyeride large">
-          <div className="chart-header-buckeyeride">
-            <h3>
-              {selectedTimeframe === 'day' && 'Peak Hours Analysis'}
-              {selectedTimeframe === 'week' && 'Weekly Traffic Pattern'}
-              {selectedTimeframe === 'month' && 'Monthly Trend'}
-            </h3>
-            <p>
-              {selectedTimeframe === 'day' && 'Passenger volume throughout the day'}
-              {selectedTimeframe === 'week' && 'Passenger volume by day of week'}
-              {selectedTimeframe === 'month' && 'Passenger volume by week'}
-            </p>
-          </div>
-          <div className="chart-container-buckeyeride">
-            <Line data={peakHoursData} options={lineChartOptions} />
-          </div>
-        </div>
-
-        {/* Doughnut Chart - Crowd by Route */}
-        <div className="chart-card-buckeyeride">
-          <div className="chart-header-buckeyeride">
-            <h3>Crowd by Route</h3>
-            <p>Total passengers per route</p>
-          </div>
-          <div className="chart-container-buckeyeride doughnut">
-            <Doughnut data={routeDistribution} options={doughnutOptions} />
+          <div className="stat-icon passengers-icon">
+            <Users size={32} />
           </div>
         </div>
       </div>

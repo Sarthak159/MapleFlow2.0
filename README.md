@@ -1,105 +1,60 @@
-# 🚌 Maple Flow - Smart Bus Tracker
+# Maple Flow Bus Tracker
 
-## Quick Start Guide
+Maple Flow now uses the live Ohio State University bus API for route geometry, stop locations, live vehicle positions, and stop arrival predictions. Estimated crowding and comfort metrics are still derived from the historical CSV dataset and are labeled as estimates in the UI.
 
-### Installation Instructions:
+## Development
 
-1. **Extract the zip file**
-
-2. **Open terminal in the project folder**
-   ```bash
-   cd maple-flow-bus-tracker
-   ```
-
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm start
-   ```
-   
-
-5. **Open your browser to** `http://localhost:3000`
-
-## Project Structure
-
-All React source files are in the `src/` directory.
-- Components: `src/components/`
-- Context: `src/context/`
-
-# [Project Name]
-
-**[Short tagline or project description]**
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)  
-2. [Motivation](#motivation)  
-3. [Features](#features)  
-4. [Getting Started](#getting-started)  
-   - [Prerequisites](#prerequisites)  
-   - [Installation](#installation)  
-   - [Usage](#usage)  
-5. [Project Structure](#project-structure)  
-6. [Configuration](#configuration)  
-7. [Testing](#testing)  
-8. [Contributing](#contributing)  
-9. [License](#license)  
-10. [Acknowledgements](#acknowledgements)
-
----
-
-## Overview
-
-This project implements **[brief description of purpose]** using Maple Flow as the core platform.  
-It is designed to [state user/engineering/academic need], providing [key value propositions].
-
----
-
-## Motivation
-
-Why this project exists:  
-- Many workflows for [domain or problem] rely on [pain point or limitation].  
-- Maple Flow offers a free-form canvas and powerful math engine, enabling more readable, auditable, and maintainable calculations. :contentReference[oaicite:1]{index=1}  
-- This project streamlines [specify what you streamline: e.g., design calculations, sensor fusion modeling, robotics perchance] by leveraging Maple Flow’s features.
-
----
-
-## Features
-
-- Intuitive worksheet layout with whiteboard-style math containers.  
-- Automatic recalculation — results always reflect current inputs. :contentReference[oaicite:2]{index=2}  
-- Rich mathematical modelling and documentation within the same environment.  
-- [Feature 1 – e.g., “Sensor fusion module for LiDAR & camera bounding boxes”]  
-- [Feature 2 – e.g., “Export to PDF/reporting capability”]  
-- [Feature 3 – e.g., “Template architecture for rapid reuse”]
-
----
-
-## Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have:  
-- Maple Flow installed (version [specify minimum])  
-- [Any other software/hardware requirements, e.g., “Windows 10 or higher”, “MATLAB engine”, “ROS2 Foxy”]  
-- [Optional: any licences or access rights]
-
-### Installation
-
-Clone the repository:
+Install dependencies:
 
 ```bash
-git clone https://github.com/[your-username]/[repo-name].git
-cd [repo-name]
+npm install
+```
 
-- Styles: `src/App.css`
+Run the React app and the local OSU bus proxy together:
 
-## Note
-All the component files have been created in your workspace under `src/` folder.
-Please copy them from `C:\Users\khush\src\` to this project folder to complete the setup.
+```bash
+npm start
+```
+
+The React client runs on `http://localhost:3000` and the local proxy runs on `http://localhost:3001`.
+
+## Production
+
+Create the frontend build:
+
+```bash
+npm run build
+```
+
+Serve the production build and API proxy from Express:
+
+```bash
+npm run serve
+```
+
+## API
+
+The app exposes one local backend endpoint:
+
+- `GET /api/osu-bus/snapshot`
+
+This endpoint:
+
+- fetches the live OSU route list, route details, and per-route vehicles
+- normalizes the data into route, stop, and vehicle arrays for the frontend
+- caches the last good snapshot for 15 seconds
+- serves stale cached data if the upstream OSU API temporarily fails
+
+## Testing
+
+Server normalization tests:
+
+```bash
+npm run test:server
+```
+
+Frontend build verification:
+
+```bash
+npm run build
+```

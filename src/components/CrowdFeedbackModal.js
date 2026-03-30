@@ -1,8 +1,7 @@
-// CrowdFeedbackModal.js - MapleFlow Design
 import React, { useState } from "react";
-import { useBus } from "../context/BusContext";
 import { X, Users } from "lucide-react";
 import toast from "react-hot-toast";
+import { useBus } from "../context/BusContext";
 
 const CrowdFeedbackModal = ({ bus, onClose }) => {
   const { updateCrowdLevel, roundToSignificantFigures } = useBus();
@@ -19,11 +18,9 @@ const CrowdFeedbackModal = ({ bus, onClose }) => {
     setSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await new Promise((resolve) => setTimeout(resolve, 800));
       updateCrowdLevel(bus.id, selectedLevel);
-      toast.success("Thank you for your feedback! Crowd level updated.");
+      toast.success("Thank you for your feedback. Estimated crowding updated.");
       onClose();
     } catch (error) {
       toast.error("Failed to submit feedback. Please try again.");
@@ -32,40 +29,34 @@ const CrowdFeedbackModal = ({ bus, onClose }) => {
     }
   };
 
-  // Calculate comfort score circle
   const comfortScore = roundToSignificantFigures(bus.comfortScore || 7.5);
   const circumference = 2 * Math.PI * 45;
   const progress = (comfortScore / 10) * circumference;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content-mapleflow" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content-mapleflow" onClick={(event) => event.stopPropagation()}>
         <button onClick={onClose} className="close-btn-modal">
           <X size={24} />
         </button>
 
         <div className="modal-header-mapleflow">
-          <h2>Bus {bus.route} - {bus.destination}</h2>
+          <h2>
+            {bus.routeCode} - {bus.routeName}
+          </h2>
+          <p style={{ margin: 0, color: "#6b7280" }}>Crowding is estimated, not live OSU data.</p>
         </div>
 
         <div className="modal-body-mapleflow">
-          {/* Arriving Info and Comfort Score */}
           <div className="modal-top-section">
             <div className="arriving-info">
               <div className="arriving-label">Arriving in</div>
-              <div className="arriving-time">{bus.eta} min</div>
+              <div className="arriving-time">{bus.etaMinutes ?? "N/A"} min</div>
             </div>
-            
+
             <div className="comfort-score-circle">
               <svg width="120" height="120" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
-                />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
                 <circle
                   cx="50"
                   cy="50"
@@ -86,42 +77,36 @@ const CrowdFeedbackModal = ({ bus, onClose }) => {
             </div>
           </div>
 
-          {/* Crowd Feedback */}
           <div className="crowd-feedback-section">
             <div className="crowd-feedback-title">
               <Users size={18} />
-              <span>How crowded is Bus {bus.route}?</span>
+              <span>How crowded is {bus.routeCode}?</span>
             </div>
-            
+
             <div className="crowd-buttons">
               {crowdLevels.map((level) => (
                 <button
                   key={level.value}
-                  className={`crowd-btn ${selectedLevel === level.value ? 'selected' : ''}`}
+                  className={`crowd-btn ${selectedLevel === level.value ? "selected" : ""}`}
                   onClick={() => setSelectedLevel(level.value)}
                 >
                   {level.label}
                 </button>
               ))}
             </div>
-            
-            <button 
-              className="submit-report-btn"
-              onClick={handleSubmit}
-              disabled={submitting}
-            >
+
+            <button className="submit-report-btn" onClick={handleSubmit} disabled={submitting}>
               {submitting ? "Submitting..." : "Submit Report"}
             </button>
           </div>
 
-          {/* Next Stops */}
           <div className="next-stops-section">
-            <h3>Next Stops</h3>
+            <h3>Upcoming Stops</h3>
             <div className="stops-list">
-              {bus.nextStops && bus.nextStops.map((stop, index) => (
-                <div key={index} className="stop-item">
-                  <span className="stop-name">{stop.name}</span>
-                  <span className="stop-eta">{stop.eta} min</span>
+              {bus.nextStops.map((stop) => (
+                <div key={`${bus.id}-${stop.stopId}`} className="stop-item">
+                  <span className="stop-name">{stop.stopName}</span>
+                  <span className="stop-eta">{stop.etaMinutes} min</span>
                 </div>
               ))}
             </div>

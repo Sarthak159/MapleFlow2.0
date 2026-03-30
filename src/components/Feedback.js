@@ -16,10 +16,10 @@ const Feedback = () => {
 
   // Group buses by route for better organization
   const groupedBuses = buses.reduce((acc, bus) => {
-    if (!acc[bus.route]) {
-      acc[bus.route] = [];
+    if (!acc[bus.routeCode]) {
+      acc[bus.routeCode] = [];
     }
-    acc[bus.route].push(bus);
+    acc[bus.routeCode].push(bus);
     return acc;
   }, {});
 
@@ -75,10 +75,10 @@ const Feedback = () => {
           >
             <option value="">Select a bus</option>
             {Object.entries(groupedBuses).map(([route, buses]) => (
-              <optgroup key={route} label={`${route} - ${buses[0].destination}`}>
+              <optgroup key={route} label={`${route} - ${buses[0].routeName}`}>
                 {buses.map(bus => (
                   <option key={bus.id} value={bus.id}>
-                    {bus.id}
+                    {bus.id} · {bus.destination}
                   </option>
                 ))}
               </optgroup>

@@ -6,8 +6,8 @@ import BusCard from './BusCard';
 const StopCard = ({ stop, buses, onBusClick }) => {
   // Filter buses for this stop
   const stopBuses = buses.filter(bus => 
-    bus.currentStop === stop.name || 
-    (bus.nextStops && bus.nextStops.some(s => s.name === stop.name))
+    bus.currentStopId === stop.id || 
+    (bus.nextStops && bus.nextStops.some(s => s.stopId === stop.id))
   );
 
   if (stopBuses.length === 0) return null;
