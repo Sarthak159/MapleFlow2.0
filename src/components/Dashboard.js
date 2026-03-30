@@ -4,7 +4,6 @@ import { useBus } from "../context/BusContext";
 import BusCard from "./BusCard";
 import MapView from "./MapView";
 import CrowdFeedbackModal from "./CrowdFeedbackModal";
-import RouteFilter from "./RouteFilter";
 
 const Dashboard = () => {
   const {
@@ -86,9 +85,6 @@ const Dashboard = () => {
           <p className="dashboard-subtitle">
             Real-time arrivals and stop locations with estimated crowding
           </p>
-          <div style={{ marginTop: "14px" }}>
-            <RouteFilter />
-          </div>
           <div
             style={{
               display: "flex",
@@ -107,23 +103,14 @@ const Dashboard = () => {
             {error && <span style={{ color: "#b91c1c" }}>{error}</span>}
           </div>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
+        <button
+          className="refresh-button"
+          onClick={handleRefresh}
+          disabled={refreshing}
         >
-          <button
-            className="refresh-button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
-            Refresh
-          </button>
-        </div>
+          <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
+          Refresh
+        </button>
       </div>
 
       <div className="stats-grid">
