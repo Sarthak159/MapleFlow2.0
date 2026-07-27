@@ -184,14 +184,8 @@ const Analytics = () => {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "24px",
-        }}
-      >
-        <div className="stat-card" style={{ minHeight: "360px" }}>
+      <div className="analytics-charts-grid">
+        <div className="stat-card analytics-chart-card">
           <div className="stat-content" style={{ width: "100%" }}>
             <h3 className="stat-label">Busiest Stops Right Now</h3>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>
@@ -206,7 +200,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        <div className="stat-card" style={{ minHeight: "360px" }}>
+        <div className="stat-card analytics-chart-card">
           <div className="stat-content" style={{ width: "100%" }}>
             <h3 className="stat-label">Arrival Distribution</h3>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>
@@ -221,7 +215,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        <div className="stat-card" style={{ minHeight: "360px" }}>
+        <div className="stat-card analytics-chart-card">
           <div className="stat-content" style={{ width: "100%" }}>
             <h3 className="stat-label">Estimated Occupancy by Route</h3>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>

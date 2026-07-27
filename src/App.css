@@ -3554,3 +3554,258 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Mobile application layout */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.analytics-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 24px;
+}
+
+.analytics-chart-card {
+  min-width: 0;
+  min-height: 360px;
+}
+
+@media (max-width: 720px) {
+  .app-buckeyeride {
+    display: block;
+  }
+
+  .main-content-buckeyeride {
+    width: 100%;
+    min-width: 0;
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+
+  .dashboard-buckeyeride,
+  .analytics-page-buckeyeride,
+  .find-my-stop-page {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-title {
+    font-size: clamp(1.75rem, 9vw, 2.15rem);
+    line-height: 1.05;
+  }
+
+  .dashboard-filter {
+    margin-top: 16px;
+  }
+
+  .live-data-meta {
+    font-size: 0.72rem;
+  }
+
+  .stats-grid {
+    display: flex;
+    gap: 10px;
+    margin-right: -16px;
+    margin-left: -16px;
+    padding: 0 16px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .stats-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stats-grid .stat-card {
+    flex: 0 0 min(72vw, 230px);
+    min-height: 112px;
+    padding: 16px;
+    scroll-snap-align: start;
+  }
+
+  .stats-grid .stat-label {
+    min-height: auto;
+    font-size: 0.7rem;
+  }
+
+  .stats-grid .stat-value {
+    margin-top: 6px;
+    font-size: 1.75rem;
+  }
+
+  .dashboard-map-section {
+    height: min(58vh, 360px);
+  }
+
+  .map-legend {
+    max-width: 132px;
+    padding: 8px !important;
+    font-size: 10px !important;
+  }
+
+  .map-legend h4 {
+    margin-bottom: 4px !important;
+    font-size: 11px !important;
+  }
+
+  .map-legend > div {
+    display: none;
+  }
+
+  .map-legend button {
+    min-height: 36px;
+    margin-top: 0 !important;
+    padding: 7px 9px !important;
+  }
+
+  .section-heading-row {
+    align-items: flex-end;
+  }
+
+  .bus-card-dashboard {
+    border-radius: 16px;
+  }
+
+  .bus-route-name,
+  .bus-route-desc {
+    overflow-wrap: anywhere;
+  }
+
+  .bus-card-dashboard-footer {
+    align-items: flex-start;
+  }
+
+  .selected-stop-title-row {
+    gap: 12px;
+  }
+
+  .selected-stop-header,
+  .stop-bus-card,
+  .no-buses-message {
+    padding: 20px;
+  }
+
+  .selected-stop-header h1 {
+    font-size: 1.55rem;
+    overflow-wrap: anywhere;
+  }
+
+  .stop-bus-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .stop-bus-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stop-bus-route {
+    font-size: 1.35rem;
+  }
+
+  .analytics-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .analytics-chart-card {
+    display: block;
+    min-height: 330px;
+    padding: 16px;
+  }
+
+  .analytics-chart-card > .stat-icon {
+    display: none;
+  }
+
+  .feedback-header-mapleflow h1 {
+    font-size: 1.55rem;
+  }
+
+  .form-group-mapleflow {
+    margin-bottom: 22px;
+  }
+
+  .sidebar-buckeyeride {
+    z-index: 2000;
+  }
+
+  .sidebar-nav-item {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 420px) {
+  .main-content-buckeyeride {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .stats-grid {
+    margin-right: -12px;
+    margin-left: -12px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .dashboard-map-section {
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .bus-card-dashboard-header {
+    flex-wrap: wrap;
+  }
+
+  .bus-card-title {
+    min-width: calc(100% - 58px);
+  }
+
+  .crowd-badge-dashboard {
+    margin-left: 58px;
+  }
+
+  .feedback-page-mapleflow {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .feedback-header-mapleflow,
+  .feedback-form-mapleflow {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .crowd-options-mapleflow {
+    grid-template-columns: 1fr;
+  }
+
+  .crowd-option-btn {
+    display: grid;
+    grid-template-columns: 36px 72px 1fr;
+    align-items: center;
+    min-height: 64px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .crowd-emoji,
+  .crowd-label,
+  .crowd-desc {
+    margin: 0;
+  }
+
+  .crowd-desc {
+    display: block;
+  }
+}
