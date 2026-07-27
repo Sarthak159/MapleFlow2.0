@@ -86,39 +86,31 @@ const Dashboard = () => {
           <p className="dashboard-subtitle">
             Real-time arrivals and stop locations with estimated crowding
           </p>
-          <div style={{ marginTop: "14px" }}>
+          <div className="dashboard-filter">
             <RouteFilter />
           </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-              marginTop: "12px",
-              fontSize: "13px",
-              color: "#4b5563",
-            }}
-          >
-            <span>
-              <Radio size={14} style={{ verticalAlign: "text-bottom" }} /> {dataSource}
+          <div className="live-data-meta" aria-live="polite">
+            <span className="live-data-source">
+              <Radio size={14} /> {dataSource}
             </span>
             <span>Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : "N/A"}</span>
-            {isStale && <span style={{ color: "#b45309" }}>Showing cached data</span>}
-            {error && <span style={{ color: "#b91c1c" }}>{error}</span>}
+            {isStale && <span className="status-warning">Showing cached data</span>}
+            {error && <span className="status-error">{error}</span>}
           </div>
         </div>
         <button
+          type="button"
           className="refresh-button"
           onClick={handleRefresh}
           disabled={refreshing}
         >
           <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
-          Refresh
+          <span>Refresh</span>
         </button>
       </div>
 
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card stat-card-blue">
           <div className="stat-content">
             <h3 className="stat-label">Active Buses</h3>
             <p className="stat-value">{activeBuses}</p>
@@ -128,7 +120,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card stat-card-pink">
           <div className="stat-content">
             <h3 className="stat-label">Avg. Occupancy</h3>
             <p className="stat-value">{avgOccupancy}%</p>
@@ -139,7 +131,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card stat-card-green">
           <div className="stat-content">
             <h3 className="stat-label">Avg Comfort</h3>
             <p className="stat-value">{avgComfort}/10</p>
@@ -151,11 +143,19 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-map-section">
+      <section className="dashboard-map-section" aria-label="Live bus map">
         <MapView />
-      </div>
+      </section>
 
-      <div className="bus-cards-grid">
+      <section className="bus-list-section" aria-labelledby="live-vehicles-heading">
+        <div className="section-heading-row">
+          <div>
+            <p className="eyebrow">Live fleet</p>
+            <h2 id="live-vehicles-heading">Vehicles in service</h2>
+          </div>
+          <span className="result-count">{sortedBuses.length} buses</span>
+        </div>
+        <div className="bus-cards-grid">
         {sortedBuses.map((bus) => (
           <BusCard
             key={bus.id}
@@ -164,7 +164,8 @@ const Dashboard = () => {
             onClick={handleBusClick}
           />
         ))}
-      </div>
+        </div>
+      </section>
 
       {selectedBus && (
         <CrowdFeedbackModal bus={selectedBus} onClose={() => setSelectedBus(null)} />

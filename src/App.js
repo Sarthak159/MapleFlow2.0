@@ -16,8 +16,9 @@ function App() {
       <NotificationProvider>
         <Router>
           <div className="app-buckeyeride">
+            <a className="skip-link" href="#main-content">Skip to main content</a>
             <Sidebar />
-            <main className="main-content-buckeyeride">
+            <main id="main-content" className="main-content-buckeyeride">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/stops" element={<FindMyStop />} />

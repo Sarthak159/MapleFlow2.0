@@ -47,7 +47,12 @@ const BusCard = ({ bus, nextBus, onClick }) => {
   };
 
   return (
-    <div className="bus-card-dashboard" onClick={() => onClick && onClick(bus)}>
+    <button
+      type="button"
+      className="bus-card-dashboard"
+      onClick={() => onClick && onClick(bus)}
+      aria-label={`View crowd details for ${bus.routeCode} ${bus.routeName}`}
+    >
       <div className="bus-card-dashboard-header">
         <div
           className="bus-route-icon"
@@ -117,7 +122,7 @@ const BusCard = ({ bus, nextBus, onClick }) => {
           {(bus.currentStopName || bus.nextStops[0]?.stopName || "Live route").toLowerCase()}
         </span>
       </div>
-    </div>
+    </button>
   );
 };
 

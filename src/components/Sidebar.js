@@ -1,7 +1,7 @@
 // Sidebar.js - MapleFlow Navigation
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bus, MapPin, MessageSquare, BarChart3, User } from 'lucide-react';
+import { Bus, MapPin, MessageSquare, BarChart3 } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -14,7 +14,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="sidebar-buckeyeride">
+    <aside className="sidebar-buckeyeride" aria-label="Primary navigation">
       {/* Logo */}
       <div className="sidebar-logo">
         <img 
@@ -47,17 +47,14 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* User Profile */}
-      <div className="sidebar-profile">
-        <div className="profile-avatar-small">
-          <User size={24} />
-        </div>
-        <div className="profile-info-small">
-          <p className="profile-name">Student</p>
-          <p className="profile-role">Campus Transit</p>
+      <div className="sidebar-status">
+        <span className="status-dot" aria-hidden="true" />
+        <div>
+          <p className="profile-name">Service online</p>
+          <p className="profile-role">Live campus transit</p>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
